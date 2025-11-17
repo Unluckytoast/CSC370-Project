@@ -2,11 +2,15 @@
 
 from sentence_transformers import SentenceTransformer, util
 import numpy as np
+from transformers import pipeline
 
 # Load AI model that understands both Spanish and English
 # Using the MiniLM model because it's fast and doesn't eat up too much memory
 model_name = "paraphrase-multilingual-MiniLM-L12-v2"
 model = SentenceTransformer(model_name)
+
+# Load Hugging Face translation model (Spanish to English)
+translator = pipeline("translation", model="Helsinki-NLP/opus-mt-es-en")
 
 # Dictionary of Spanish words with their possible English meanings this is  just to show how it works
 candidates = {
@@ -61,11 +65,17 @@ def interactive_loop():
             print(f"No candidate translations found for '{target_word}'.\n")
             continue  
 
+       
         # Show them the results, best matches first
         print("\nRanked translations (score = similarity):")
         for cand, score in results:
             print(f" - {cand}    ({score:.3f})")
         print()
+
+         # Translate the full sentence using Hugging Face model
+        translation = translator(spanish_sentence)[0]['translation_text']
+        print(f"\nFull English translation: {translation}")
+
 
 if __name__ == "__main__":
     # Wake up model and run through a quick test makes everything faster after that
