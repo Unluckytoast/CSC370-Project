@@ -1,5 +1,3 @@
-
-
 from sentence_transformers import SentenceTransformer, util
 import numpy as np
 from transformers import pipeline
@@ -148,9 +146,62 @@ def interactive_loop():
         plt.show()
 
 
+def run_context_aware_tests():
+    print("\nRunning context-aware translation tests...")
+    test_cases = [
+        {'spanish_sentence': 'El gato está en el coche.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'cat (animal)'},
+        {'spanish_sentence': 'Necesito el gato para cambiar la llanta.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'car jack'},
+        {'spanish_sentence': 'El gato duerme en la cama.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'cat (animal)'},
+        {'spanish_sentence': 'El gato levantó el coche.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'car jack'},
+        {'spanish_sentence': 'El gato negro saltó la valla.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'cat (animal)'},
+        {'spanish_sentence': 'El gato del taller está roto.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'car jack'},
+        {'spanish_sentence': 'El gato y el perro juegan juntos.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'cat (animal)'},
+        {'spanish_sentence': 'El gato hidráulico es muy útil.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'car jack'},
+        {'spanish_sentence': 'El gato está debajo del coche.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'car jack'},
+        {'spanish_sentence': 'El gato maulló toda la noche.', 'target_word': 'gato', 'word_to_replace': 'cat', 'expected': 'cat (animal)'},
+        {'spanish_sentence': 'La llama del fuego es brillante.', 'target_word': 'llama', 'word_to_replace': 'flame', 'expected': 'flame'},
+        {'spanish_sentence': 'La llama corre por el campo.', 'target_word': 'llama', 'word_to_replace': 'flame', 'expected': 'llama (animal)'},
+        {'spanish_sentence': 'La llama quemó el papel.', 'target_word': 'llama', 'word_to_replace': 'flame', 'expected': 'flame'},
+        {'spanish_sentence': 'La llama tiene mucha lana.', 'target_word': 'llama', 'word_to_replace': 'flame', 'expected': 'llama (animal)'},
+        {'spanish_sentence': 'La llama saltó la cerca y la llama encendió la vela.', 'target_word': 'llama', 'word_to_replace': 'flame', 'expected': 'flame'},
+        {'spanish_sentence': 'Me senté en el banco del parque.', 'target_word': 'banco', 'word_to_replace': 'bench', 'expected': 'bench (seat)'},
+        {'spanish_sentence': 'Voy al banco a sacar dinero.', 'target_word': 'banco', 'word_to_replace': 'bank', 'expected': 'bank (financial)'},
+        {'spanish_sentence': 'La boca del río es ancha.', 'target_word': 'boca', 'word_to_replace': 'mouth', 'expected': 'mouth'},
+        {'spanish_sentence': 'Abre la boca.', 'target_word': 'boca', 'word_to_replace': 'mouth', 'expected': 'mouth'},
+    ]
+    correct = 0
+    for i, case in enumerate(test_cases, 1):
+        print(f"\nTest {i}: {case['spanish_sentence']} (target: {case['target_word']})")
+        results = rank_translations(case['spanish_sentence'], case['target_word'], k=1)
+        top_candidate = results[0][0] if results else None
+        translation = translator(case['spanish_sentence'])[0]['translation_text']
+        custom_translation = translation
+        if top_candidate and case['word_to_replace'] in translation:
+            custom_translation = translation.replace(case['word_to_replace'], top_candidate, 1)
+        print(f"Original translation: {translation}")
+        print(f"Context-aware translation: {custom_translation}")
+        print(f"Expected: {case['expected']}")
+        if top_candidate and top_candidate == case['expected']:
+            print("Result: PASS")
+            correct += 1
+        else:
+            print("Result: FAIL")
+    print(f"\nTest accuracy: {correct}/{len(test_cases)} correct ({(correct/len(test_cases))*100:.1f}%)")
+    # Show accuracy bar chart
+    import matplotlib.pyplot as plt
+    plt.bar(['Correct', 'Incorrect'], [correct, len(test_cases)-correct], color=['green', 'red'])
+    plt.title('Automated Test Accuracy')
+    plt.ylabel('Count')
+    plt.show()
+
+
+
+
 if __name__ == "__main__":
     # Wake up model and run through a quick test makes everything faster after that
     print("Loading model and warming up (one-time)...")
     _ = model.encode("hola", convert_to_tensor=True)
     print("Ready!\n")
-    interactive_loop() 
+    run_context_aware_tests()
+    #uncomment to enable interactive loop
+    # interactive_loop()
